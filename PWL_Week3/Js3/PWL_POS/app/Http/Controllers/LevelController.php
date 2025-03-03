@@ -10,8 +10,12 @@ class LevelController extends Controller
     public function index()
     {
         // insert data CUS
-        // DB::insert('insert into m_level (level_kode, level_nama, created_at) values (?, ?, ?)', ['CUS', 'Pelanggan', now()]);
-        // return 'Insert data baru berhasil';
+        DB::insert('INSERT INTO m_level (level_id, level_kode, level_nama, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?)', 
+            [4, 'CUS', 'Pelanggan', now(), now()]
+        );
+        return 'Insert data baru berhasil';
+
 
         // update data CUS
         // $row = DB::update('update m_level set level_nama = ? where level_kode = ?', ['Customer', 'CUS']);
@@ -22,8 +26,8 @@ class LevelController extends Controller
         // return 'Hapus data berhasil. Jumlah data yang dihapus: ' . $row . ' baris';
 
         // select data m_level
-        $data = DB::select('select * from m_level');
-        return view('level', ['data' => $data]);
+        // $data = DB::select('select * from m_level');
+        // return view('level', ['data' => $data]);
 
     }
 }
