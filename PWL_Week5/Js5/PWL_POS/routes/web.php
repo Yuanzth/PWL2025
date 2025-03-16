@@ -27,7 +27,10 @@ Route::get('/sales', [SalesController::class, 'index']);
 
 Route::get('/level', [LevelController::class, 'index']);
 
-Route::get('/kategori', [KategoriController::class, 'index']);
+Route::get('/kategori', [KategoriController::class, 'index']); 
+Route::get('/kategori/create', [KategoriController::class, 'create']); 
+Route::post('/kategori', [KategoriController::class, 'store']);
+
 
 Route::get('/user', [UserController::class, 'index']);
 
@@ -40,3 +43,7 @@ Route::get('/user/ubah/{id}', [UserController::class, 'ubah']);
 Route::put('/user/ubah_simpan/{id}', [UserController::class, 'ubah_simpan']);
 
 Route::get('/user/hapus/{id}', [UserController::class, 'hapus']);
+
+Route::get('/welcome', function () {
+    return view('welcome');
+});

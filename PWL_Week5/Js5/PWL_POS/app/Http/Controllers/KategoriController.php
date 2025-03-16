@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\DataTables\KategoriDataTable;
+use App\Models\KategoriModel; 
+
 
 class KategoriController extends Controller
 {
-    public function index()
+    public function index(KategoriDataTable $dataTable)
     {
         // insert data dengan metode QUERY BUILDER
         // $data = [
@@ -30,7 +33,22 @@ class KategoriController extends Controller
         // return 'Delete data berhasil. Jumlah data yang dihapus: ' . $row . ' baris';
 
         // select data dengan metode QUERY BUILDER
-        $data = DB::table('m_kategori')->get();
-        return view('kategori', ['data' => $data]);
+        // $data = DB::table('m_kategori')->get();
+        // return view('kategori', ['data' => $data]);
+        return $dataTable->render('kategori.index');
     }
+    public function create() 
+    { 
+        return view('kategori.create'); 
+    } 
+
+    public function store(Request $request) 
+    { 
+        KategoriModel::create([ 
+            'kategori_kode' => $request->kodeKategori, 
+            'kategori_nama' => $request->namaKategori, 
+        ]); 
+
+        return redirect('/kategori')->with('success', 'Kategori berhasil ditambahkan!'); 
+    } 
 }
