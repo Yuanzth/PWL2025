@@ -30,7 +30,9 @@ Route::get('/level', [LevelController::class, 'index']);
 Route::get('/kategori', [KategoriController::class, 'index']); 
 Route::get('/kategori/create', [KategoriController::class, 'create']); 
 Route::post('/kategori', [KategoriController::class, 'store']);
-
+Route::get('/kategori/{id}/edit', [KategoriController::class, 'edit']);
+Route::post('/kategori/{id}', [KategoriController::class, 'update']);
+Route::get('/kategori/delete/{id}', [KategoriController::class, 'delete']);
 
 Route::get('/user', [UserController::class, 'index']);
 
