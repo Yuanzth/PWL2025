@@ -45,7 +45,7 @@
 
 <script>
     $(document).ready(function() {
-        $("#form-tambah").validate({
+        $("#form-tambah").validate(
             rules: {
                 level_id: { required: true, number: true },
                 username: { required: true, minlength: 3, maxlength: 20 },
