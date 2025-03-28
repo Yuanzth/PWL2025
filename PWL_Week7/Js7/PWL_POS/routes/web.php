@@ -14,6 +14,8 @@ Route::pattern('id', '[0-9]+'); // Pastikan parameter {id} hanya berupa angka
 // Rute otentikasi
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('login', [AuthController::class, 'postlogin']);
+Route::get('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'postRegister']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 
