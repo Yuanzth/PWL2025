@@ -101,23 +101,23 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    // ADM & MNG bisa menambah, mengedit, dan menghapus barang
-    Route::middleware(['authorize:ADM,MNG'])->group(function(){
+    // Route untuk Admin dan Manager saja (create, update, delete barang)
+    Route::middleware(['authorize:ADM,MNG'])->group(function () {
+        // Akses tambahan untuk barang (create, update, delete)
         Route::group(['prefix' => 'barang'], function () {
-            Route::get('/create', [BarangController::class, 'create']); // Form tambah barang
-            Route::post('/', [BarangController::class, 'store']); // Simpan barang baru
-            // Create menggunakan AJAX
-            Route::get('/create_ajax', [BarangController::class, 'create_ajax']); // Form tambah barang AJAX
-            Route::post('/ajax', [BarangController::class, 'store_ajax']); // Simpan barang baru AJAX
-            Route::get('/{id}/edit', [BarangController::class, 'edit']); // Form edit barang
-            Route::put('/{id}', [BarangController::class, 'update']); // Simpan perubahan barang
-            // Edit menggunakan AJAX
-            Route::get('/{id}/edit_ajax', [BarangController::class, 'edit_ajax']); // Form edit barang AJAX
-            Route::put('/{id}/update_ajax', [BarangController::class, 'update_ajax']); // Simpan perubahan barang AJAX
-            // Delete menggunakan AJAX
-            Route::get('/{id}/delete_ajax', [BarangController::class, 'confirm_ajax']); // Form konfirmasi hapus barang AJAX
-            Route::delete('/{id}/delete_ajax', [BarangController::class, 'delete_ajax']); // Hapus barang AJAX
-            Route::delete('/{id}', [BarangController::class, 'destroy']); // Hapus barang
+            Route::get('/create', [BarangController::class, 'create']); // menampilkan halaman form tambah barang
+            Route::post('/', [BarangController::class, 'store']); // menyimpan data barang baru
+            Route::get('/create_ajax', [BarangController::class, 'create_ajax']); // Menampilkan halaman form tambah barang Ajax
+            Route::post('/ajax', [BarangController::class, 'store_ajax']); // Menyimpan data barang baru Ajax
+            Route::get('/{id}/edit_ajax', [BarangController::class, 'edit_ajax']); // Menampilkan halaman form edit barang Ajax
+            Route::put('/{id}/update_ajax', [BarangController::class, 'update_ajax']); // Menyimpan perubahan data barang Ajax
+            Route::get('/{id}/edit', [BarangController::class, 'edit']); // menampilkan halaman form edit barang
+            Route::put('/{id}', [BarangController::class, 'update']); // menyimpan perubahan data barang
+            Route::get('/{id}/delete_ajax', [BarangController::class, 'confirm_ajax']); // Untuk tampilkan form confirm delete barang Ajax
+            Route::delete('/{id}/delete_ajax', [BarangController::class, 'delete_ajax']); // Untuk hapus data barang Ajax
+            Route::delete('/{id}', [BarangController::class, 'destroy']); // menghapus data barang
+            Route::get('/import', [BarangController::class, 'import']); // ajax form upload excel
+            Route::post('/import_ajax', [BarangController::class, 'import_ajax']); // AJAX import excel
         });
     });
     
