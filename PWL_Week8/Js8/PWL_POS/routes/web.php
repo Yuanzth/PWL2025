@@ -23,6 +23,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 // Semua rute di bawah ini hanya bisa diakses jika sudah login
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [WelcomeController::class, 'index']);
+    Route::get('/profile', [UserController::class, 'profilePage']);
+    Route::post('/user/editPhoto', [UserController::class, 'editPhoto']);
 
     Route::middleware(['authorize:ADM'])->group(function(){
         Route::group(['prefix' => 'user'], function () {
@@ -47,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('import_ajax', [UserController::class, 'import_ajax']); // ajax import excel
             Route::get('export_excel', [UserController::class, 'export_excel']); //export excel
             Route::get('export_pdf', [UserController::class, 'export_pdf']); //export pdf
+            
         });
     });
 
