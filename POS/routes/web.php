@@ -7,7 +7,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\AuthController;
-use App\Models\SupplierModel;
+use App\Http\Controllers\StokController;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('id', '[0-9]+'); // Pastikan parameter {id} hanya berupa angka
@@ -163,6 +163,38 @@ Route::middleware(['auth'])->group(function () {
             Route::post('import_ajax', [SupplierController::class, 'import_ajax']); // ajax import excel
             Route::get('export_excel', [SupplierController::class, 'export_excel']); //export excel
             Route::get('export_pdf', [SupplierController::class, 'export_pdf']); //export pdf
+        });
+    });
+
+    // Route untuk semua role (ADM, MNG, STF) - Hanya View
+    Route::middleware(['authorize:ADM,MNG,STF'])->group(function(){
+        Route::group(['prefix' => 'stok'], function () {
+            Route::get('/', [StokController::class, 'index']);
+            Route::post('/list', [StokController::class, 'list']); // Gunakan POST untuk DataTables
+            Route::get('/{id}', [StokController::class, 'show']); // Jika ada fitur detail
+        });
+    });
+
+    // Route khusus Admin & Manager (ADM, MNG) - CRUD
+    Route::middleware(['authorize:ADM,MNG'])->group(function () {
+        Route::group(['prefix' => 'stok'], function () {
+            // Create
+            Route::get('/create_ajax', [StokController::class, 'create_ajax']);
+            Route::post('/ajax', [StokController::class, 'store_ajax']);
+            
+            // Update
+            Route::get('/{id}/edit_ajax', [StokController::class, 'edit_ajax']);
+            Route::put('/{id}/update_ajax', [StokController::class, 'update_ajax']);
+            
+            // Delete
+            Route::get('/{id}/delete_ajax', [StokController::class, 'confirm_ajax']);
+            Route::delete('/{id}/delete_ajax', [StokController::class, 'delete_ajax']);
+            
+            // Import & Export (Opsional: Sesuaikan kebutuhan)
+            Route::get('/import', [StokController::class, 'import']);
+            Route::post('/import_ajax', [StokController::class, 'import_ajax']);
+            Route::get('/export_excel', [StokController::class, 'export_excel']);
+            Route::get('/export_pdf', [StokController::class, 'export_pdf']);
         });
     });
 });

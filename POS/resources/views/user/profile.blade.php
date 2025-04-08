@@ -8,7 +8,7 @@
      <div class="card-body">
          <div class="row">
              <div class="col-md-4 text-center">
-                 <img src="{{ $user->foto_profil ? asset('storage/'.$user->foto_profil) : asset('img/default-profile.png') }}" 
+                 <img src="{{ $user->foto_profil ? asset('storage/'.$user->foto_profil) : asset('adminlte/dist/img/default-profile.jpg') }}" 
                      class="img-circle elevation-2" alt="User Image" style="width: 200px; height: 200px; object-fit: cover;">
                  
                  <form action="{{ url('/user/editPhoto') }}" method="POST" enctype="multipart/form-data" class="mt-3">
