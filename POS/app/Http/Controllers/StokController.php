@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\StokModel;
 use App\Models\BarangModel;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StokController extends Controller
 {
@@ -188,24 +191,180 @@ class StokController extends Controller
     }
 
     public function delete_ajax(Request $request, $id)
+        {
+            if ($request->ajax() || $request->wantsJson()) {
+                try {
+                    $stok = StokModel::findOrFail($id);
+                    $stok->delete();
+                    
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Data stok berhasil dihapus'
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Gagal menghapus stok: ' . $e->getMessage()
+                    ], 500);
+                }
+            }
+            return redirect('/');
+        }
+        public function import()
+        {
+            return view('stok.import');
+        }
+
+        public function import_ajax(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            try {
-                $stok = StokModel::findOrFail($id);
-                $stok->delete();
-                
+            $validator = Validator::make($request->all(), [
+                'file_stok' => ['required', 'mimes:xlsx', 'max:2048'] 
+            ], [
+                'file_stok.required' => 'File wajib diupload',
+                'file_stok.mimes' => 'Hanya file Excel (.xlsx) yang diperbolehkan'
+            ]);
+
+            if ($validator->fails()) {
                 return response()->json([
-                    'status' => true,
-                    'message' => 'Data stok berhasil dihapus'
-                ]);
+                    'status' => false,
+                    'message' => 'Validasi gagal',
+                    'msgField' => $validator->errors()
+                ], 422);
+            }
+
+            try {
+                $file = $request->file('file_stok');
+                $reader = IOFactory::createReader('Xlsx');
+                $reader->setReadDataOnly(true);
+                $spreadsheet = $reader->load($file->getRealPath());
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray();
+
+                $insertData = [];
+                $currentUser = auth()->user()->user_id;
                 
+                foreach ($rows as $index => $row) {
+                    if ($index === 0) continue; // Skip header
+                    
+                    // Validasi format data
+                    if (!isset($row[0]) || !isset($row[1])) continue;
+                    
+                    $barangId = $row[0];
+                    $stokJumlah = $row[1];
+
+                    // Validasi numerik
+                    if (!is_numeric($barangId) || !is_numeric($stokJumlah) || $stokJumlah < 1) {
+                        continue;
+                    }
+
+                    $insertData[] = [
+                        'barang_id' => (int)$barangId,
+                        'stok_jumlah' => (int)$stokJumlah,
+                        'user_id' => $currentUser,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+
+                if (!empty($insertData)) {
+                    StokModel::insert($insertData);
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Berhasil mengimport ' . count($insertData) . ' data stok'
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Template tidak valid atau data kosong'
+                ]);
+
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Gagal menghapus stok: ' . $e->getMessage()
+                    'message' => 'Error: ' . $e->getMessage()
                 ], 500);
             }
         }
         return redirect('/');
+    }
+    public function export_excel()
+    {
+        // Ambil data stok dengan relasi barang dan user
+        $stok = StokModel::with(['barang', 'user'])
+            ->orderBy('barang_id')
+            ->get();
+
+        // Buat spreadsheet baru
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header kolom
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Kode Barang');
+        $sheet->setCellValue('C1', 'Nama Barang');
+        $sheet->setCellValue('D1', 'Jumlah Stok');
+        $sheet->setCellValue('E1', 'Diupdate Oleh');
+        $sheet->setCellValue('F1', 'Terakhir Update');
+
+        // Format header bold
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+
+        // Isi data
+        $no = 1;
+        $row = 2;
+        foreach ($stok as $s) {
+            $sheet->setCellValue('A' . $row, $no);
+            $sheet->setCellValue('B' . $row, $s->barang->barang_kode ?? '-');
+            $sheet->setCellValue('C' . $row, $s->barang->barang_nama ?? '-');
+            $sheet->setCellValue('D' . $row, $s->stok_jumlah);
+            $sheet->setCellValue('E' . $row, $s->user->nama ?? 'System');
+            $sheet->setCellValue('F' . $row, $s->updated_at->format('d-m-Y H:i'));
+            $row++;
+            $no++;
+        }
+
+        // Auto size kolom
+        foreach (range('A', 'F') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // Format angka stok
+        $sheet->getStyle('D2:D' . $row)
+            ->getNumberFormat()
+            ->setFormatCode('#,##0');
+
+        // Set judul sheet
+        $sheet->setTitle('Data Stok');
+
+        // Generate filename
+        $filename = 'Data_Stok_' . date('Y-m-d_His') . '.xlsx';
+
+        // Set header untuk download
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save('php://output');
+        exit;
+    }
+    public function export_pdf()
+    {
+        $stok = StokModel::with(['barang', 'user'])
+            ->orderBy('barang_id')
+            ->get();
+    
+        $pdf = Pdf::loadView('stok.export_pdf', [
+            'stok' => $stok,
+            'tanggal' => now()->format('d-m-Y H:i:s')
+        ]);
+        
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOption("isRemoteEnabled", true);
+        
+        return $pdf->stream('Data_Stok_'.date('YmdHis').'.pdf');
     }
 }
