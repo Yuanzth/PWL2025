@@ -91,14 +91,14 @@
                 {
                     data: "barang_kode",
                     className: "",
-                    width: "10%",
+                    width: "12%",
                     orderable: true,
                     searchable: true
                 },
                 {
                     data: "barang_nama",
                     className: "",
-                    width: "37%",
+                    width: "28%",
                     orderable: true,
                     searchable: true
                 },
@@ -132,7 +132,7 @@
                 {
                     data: "aksi",
                     className: "text-center",
-                    width: "14%",
+                    width: "21%",
                     orderable: false,
                     searchable: false
                 }

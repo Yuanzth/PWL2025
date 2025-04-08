@@ -65,7 +65,11 @@ class StokController extends Controller
     // Menampilkan form create dengan AJAX
     public function create_ajax()
     {
-        $barang = BarangModel::select('barang_id', 'barang_nama')->get();
+        // Ambil barang yang belum ada di tabel stok
+        $barang = BarangModel::whereNotIn('barang_id', function($query) {
+            $query->select('barang_id')->from('t_stok');
+        })->select('barang_id', 'barang_nama')->get();
+
         return view('stok.create_ajax', ['barang' => $barang]);
     }
 
@@ -75,13 +79,12 @@ class StokController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             $rules = [
                 'barang_id' => 'required|integer|exists:m_barang,barang_id',
-                'stok_jumlah' => 'required|integer|min:0',
-                'stok_tanggal' => 'required|date'
+                'stok_jumlah' => 'required|integer|min:1' // Ubah min ke 1
             ];
 
             $messages = [
                 'barang_id.required' => 'Pilih barang wajib diisi',
-                'stok_jumlah.min' => 'Stok tidak boleh negatif'
+                'stok_jumlah.min' => 'Stok minimal 1'
             ];
 
             $validator = Validator::make($request->all(), $rules, $messages);
@@ -90,25 +93,32 @@ class StokController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
+                    'msgField' => $validator->errors() // Sesuaikan dengan key yang dipakai di view
                 ], 422);
             }
 
-            StokModel::create([
-                'barang_id' => $request->barang_id,
-                'user_id' => auth()->user()->user_id, // Sesuaikan dengan auth system
-                'stok_jumlah' => $request->stok_jumlah,
-                'stok_tanggal' => $request->stok_tanggal
-            ]);
+            try {
+                StokModel::create([
+                    'barang_id' => $request->barang_id,
+                    'user_id' => auth()->user()->user_id,
+                    'stok_jumlah' => $request->stok_jumlah
+                    // created_at dan updated_at akan terisi otomatis
+                ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Stok berhasil ditambahkan'
-            ]);
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Stok berhasil ditambahkan'
+                ]);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal menyimpan data: ' . $e->getMessage()
+                ], 500);
+            }
         }
         return redirect('/');
     }
-
     // Menampilkan form edit dengan AJAX
     public function edit_ajax($id)
     {
