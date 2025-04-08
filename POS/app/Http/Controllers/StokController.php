@@ -46,7 +46,7 @@ class StokController extends Controller
             ->addColumn('barang_kode', fn($s) => $s->barang->barang_kode ?? '-')
             ->addColumn('barang_nama', fn($s) => $s->barang->barang_nama ?? '-')
             ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
-            ->addColumn('updated_at', function($s) {
+            ->addColumn('updated_at', content: function($s) {
                 return $s->updated_at->format('d-m-Y H:i');
             })
             ->addColumn('aksi', function($s) {
@@ -122,13 +122,13 @@ class StokController extends Controller
     // Menampilkan form edit dengan AJAX
     public function edit_ajax($id)
     {
-        $stok = StokModel::find($id);
-        $barang = BarangModel::all();
-        
-        return view('stok.edit_ajax', [
-            'stok' => $stok,
-            'barang' => $barang
-        ]);
+        try {
+            $stok = StokModel::findOrFail($id);
+            return view('stok.edit_ajax', ['stok' => $stok]);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return view('stok.edit_ajax')->with('error', 'Data stok tidak ditemukan');
+        }
     }
 
     // Update data dengan AJAX
@@ -136,38 +136,41 @@ class StokController extends Controller
     {
         if ($request->ajax() || $request->wantsJson()) {
             $rules = [
-                'stok_jumlah' => 'required|integer|min:0',
-                'stok_tanggal' => 'required|date'
+                'stok_jumlah' => 'required|integer|min:1'
             ];
 
-            $validator = Validator::make($request->all(), $rules);
+            $messages = [
+                'stok_jumlah.min' => 'Stok minimal 1'
+            ];
+
+            $validator = Validator::make($request->all(), $rules, $messages);
 
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
+                    'msgField' => $validator->errors()
                 ], 422);
             }
 
-            $stok = StokModel::find($id);
-            
-            if ($stok) {
+            try {
+                $stok = StokModel::findOrFail($id);
                 $stok->update([
-                    'stok_jumlah' => $request->stok_jumlah,
-                    'stok_tanggal' => $request->stok_tanggal
+                    'stok_jumlah' => $request->stok_jumlah
+                    // updated_at akan terupdate otomatis
                 ]);
 
                 return response()->json([
                     'status' => true,
                     'message' => 'Stok berhasil diperbarui'
                 ]);
-            }
 
-            return response()->json([
-                'status' => false,
-                'message' => 'Data stok tidak ditemukan'
-            ], 404);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal update data: ' . $e->getMessage()
+                ], 500);
+            }
         }
         return redirect('/');
     }
@@ -175,28 +178,33 @@ class StokController extends Controller
     // Menampilkan konfirmasi hapus dengan AJAX
     public function confirm_ajax($id)
     {
-        $stok = StokModel::find($id);
-        return view('stok.confirm_ajax', ['stok' => $stok]);
+        try {
+            $stok = StokModel::with('barang')->findOrFail($id);
+            return view('stok.confirm_ajax', ['stok' => $stok]);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return view('stok.confirm_ajax')->with('error', 'Data stok tidak ditemukan');
+        }
     }
 
-    // Hapus data dengan AJAX
     public function delete_ajax(Request $request, $id)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $stok = StokModel::find($id);
-            
-            if ($stok) {
+            try {
+                $stok = StokModel::findOrFail($id);
                 $stok->delete();
+                
                 return response()->json([
                     'status' => true,
-                    'message' => 'Stok berhasil dihapus'
+                    'message' => 'Data stok berhasil dihapus'
                 ]);
+                
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal menghapus stok: ' . $e->getMessage()
+                ], 500);
             }
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Data stok tidak ditemukan'
-            ], 404);
         }
         return redirect('/');
     }
