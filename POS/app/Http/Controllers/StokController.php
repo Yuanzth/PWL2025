@@ -33,37 +33,37 @@ class StokController extends Controller
 
     // Mengambil data stok untuk DataTables
     public function list(Request $request)
-{
-    try {
-        $stok = StokModel::with(['barang', 'user'])
-            ->select('t_stok.*'); // Gunakan select lengkap
+    {
+        try {
+            $stok = StokModel::with(['barang', 'user'])
+                ->select('t_stok.*'); // Gunakan select lengkap
 
-        // Filter berdasarkan barang
-        $barang_id = $request->input('filter_barang');
-        if (!empty($barang_id)) {
-            $stok->where('barang_id', $barang_id);
+            // Filter berdasarkan barang
+            $barang_id = $request->input('filter_barang');
+            if (!empty($barang_id)) {
+                $stok->where('barang_id', $barang_id);
+            }
+            // Handle server-side parameters
+            return DataTables::eloquent($stok)
+                ->addIndexColumn()
+                ->addColumn('barang_kode', fn($s) => $s->barang->barang_kode ?? '-')
+                ->addColumn('barang_nama', fn($s) => $s->barang->barang_nama ?? '-')
+                ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
+                ->addColumn('updated_at', content: function($s) {
+                    return $s->updated_at->format('d-m-Y H:i');
+                })
+                ->addColumn('aksi', function($s) {
+                    return '<div class="text-center">'.
+                        '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/edit_ajax').'\')" class="btn btn-sm btn-warning mr-1">Edit</button>'.
+                        '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/delete_ajax').'\')" class="btn btn-sm btn-danger">Hapus</button>'.
+                        '</div>';
+                })
+                ->rawColumns(['aksi'])
+                ->toJson();
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        // Handle server-side parameters
-        return DataTables::eloquent($stok)
-            ->addIndexColumn()
-            ->addColumn('barang_kode', fn($s) => $s->barang->barang_kode ?? '-')
-            ->addColumn('barang_nama', fn($s) => $s->barang->barang_nama ?? '-')
-            ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
-            ->addColumn('updated_at', content: function($s) {
-                return $s->updated_at->format('d-m-Y H:i');
-            })
-            ->addColumn('aksi', function($s) {
-                return '<div class="text-center">'.
-                    '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/edit_ajax').'\')" class="btn btn-sm btn-warning mr-1">Edit</button>'.
-                    '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/delete_ajax').'\')" class="btn btn-sm btn-danger">Hapus</button>'.
-                    '</div>';
-            })
-            ->rawColumns(['aksi'])
-            ->toJson();
-
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
     }
     // Menampilkan form create dengan AJAX
     public function create_ajax()
