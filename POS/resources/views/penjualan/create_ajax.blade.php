@@ -40,11 +40,14 @@
                                     <option value="">- Pilih Barang -</option>
                                     @foreach ($barang as $b)
                                         <option value="{{ $b->barang_id }}" data-harga="{{ $b->harga_jual }}"
-                                            data-stok="{{ $b->stok->stok_jumlah ?? 0 }}" data-nama="{{ $b->barang_nama }}">
+                                            data-stok="{{ $b->stok ? $b->stok->stok_jumlah : 0 }}"
+                                            data-nama="{{ $b->barang_nama }}">
                                             {{ $b->barang_nama }}
                                             (Rp {{ number_format($b->harga_jual, 0, ',', '.') }})
                                             @if($b->stok)
                                                 - Stok: {{ $b->stok->stok_jumlah }}
+                                            @else
+                                                - Stok: 0
                                             @endif
                                         </option>
                                     @endforeach
@@ -193,15 +196,19 @@
     }
 
     function updateQty(index, value) {
+        // Validasi jumlah tidak boleh melebihi stok
         const maxStok = parseInt($('#select-barang option[value="' + items[index].barang_id + '"]').data('stok')) || 0;
 
         if (parseInt(value) > maxStok) {
             Swal.fire('Error', 'Jumlah melebihi stok tersedia!', 'error');
-            $(this).val(items[index].jumlah); // Reset ke nilai sebelumnya
-            return;
+            value = items[index].jumlah; // Kembalikan ke nilai sebelumnya
         }
 
-        items[index].jumlah = parseInt(value);
+        // Update jumlah di array items
+        items[index].jumlah = parseInt(value) || 1;
+
+        // Render ulang item dan hitung total
+        renderItems();
         calculateTotal();
     }
 

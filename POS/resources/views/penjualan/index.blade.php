@@ -115,7 +115,7 @@
                     data: "pembeli",
                     name: "pembeli",
                     className: "text-left",
-                    width: "20%"
+                    width: "15%"
                 },
                 { 
                     data: "penjualan_tanggal",
@@ -130,7 +130,7 @@
                     data: "total",
                     name: "total",
                     className: "text-right",
-                    width: "20%",
+                    width: "15%",
                     render: function(data) {
                         return `<span class="font-weight-bold">${data}</span>`;
                     }
@@ -145,7 +145,7 @@
                     data: "aksi",
                     name: "aksi",
                     className: "text-center",
-                    width: "10%",
+                    width: "20%",
                     orderable: false,
                     searchable: false
                 }

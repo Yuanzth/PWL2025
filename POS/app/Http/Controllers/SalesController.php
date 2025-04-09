@@ -71,7 +71,14 @@ class SalesController extends Controller
 
     public function create_ajax()
     {
-        $barang = BarangModel::select('barang_id', 'barang_nama', 'harga_jual')->get();
+        // Ambil barang yang memiliki stok > 0
+        $barang = BarangModel::with(['stok'])
+            ->whereHas('stok', function ($query) {
+                $query->where('stok_jumlah', '>', 0);
+            })
+            ->select('barang_id', 'barang_nama', 'harga_jual')
+            ->get();
+
         return view('penjualan.create_ajax', ['barang' => $barang]);
     }
 
@@ -97,7 +104,7 @@ class SalesController extends Controller
         }
 
         try {
-            // Generate kode transaksi (contoh: PNJ00011)
+            // Generate kode transaksi
             $lastId = SalesModel::max('penjualan_id') ?? 0;
             $penjualan_kode = 'PNJ' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
 
@@ -109,27 +116,30 @@ class SalesController extends Controller
                 'penjualan_tanggal' => now()
             ]);
 
-            // Simpan item transaksi
+            // Simpan item dan update stok
             foreach ($request->items as $item) {
-                $barang = BarangModel::find($item['barang_id']);
+                $barang = BarangModel::with('stok')->findOrFail($item['barang_id']);
 
+                // Validasi stok
+                if (!$barang->stok || $barang->stok->stok_jumlah < $item['jumlah']) {
+                    throw new \Exception("Stok {$barang->barang_nama} tidak mencukupi!");
+                }
+
+                // Simpan detail
                 DetailSalesModel::create([
                     'penjualan_id' => $sale->penjualan_id,
                     'barang_id' => $item['barang_id'],
                     'harga' => $barang->harga_jual,
                     'jumlah' => $item['jumlah']
                 ]);
-            }
-            // Update stok
-            $stok = StokModel::where('barang_id', $item['barang_id'])->first();
-            if ($stok) {
-                $stok->update([
-                    'stok_jumlah' => $stok->stok_jumlah - $item['jumlah'],
-                    'user_id' => auth()->user()->user_id // Update user yang mengubah stok
+
+                // Update stok
+                $barang->stok->update([
+                    'stok_jumlah' => $barang->stok->stok_jumlah - $item['jumlah'],
+                    'user_id' => auth()->user()->user_id
                 ]);
-            } else {
-                throw new \Exception("Stok barang {$barang->barang_nama} tidak ditemukan!");
             }
+
             return response()->json([
                 'status' => true,
                 'message' => 'Transaksi berhasil disimpan',
