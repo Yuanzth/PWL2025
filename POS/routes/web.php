@@ -184,9 +184,9 @@ Route::middleware(['auth'])->group(function () {
     // Route untuk semua role (ADM, MNG, STF) - Hanya View
     Route::middleware(['authorize:ADM,MNG,STF'])->group(function () {
         Route::group(['prefix' => 'penjualan'], function () {
-            Route::get('/', [SalesController::class, 'index'])->name('penjualan.index');
-            Route::post('/list', [SalesController::class, 'list']); // POST untuk DataTables
-            Route::get('/{id}', [SalesController::class, 'show']); // Detail transaksi
+            Route::get('/', [SalesController::class, 'index'])->name('penjualan.index'); // Beri nama
+            Route::post('/list', [SalesController::class, 'list'])->name('penjualan.list'); // <-- INI YANG DITAMBAH
+            Route::get('/{id}', [SalesController::class, 'show'])->name('penjualan.show');
         });
     });
 

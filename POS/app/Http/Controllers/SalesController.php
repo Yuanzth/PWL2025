@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\SalesModel;
+use App\Models\BarangModel;
+use App\Models\StokModel;
+use Illuminate\Support\Facades\Validator;
 use App\Models\DetailSalesModel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -36,14 +39,16 @@ class SalesController extends Controller
                 ->addColumn('penjualan_kode', fn($s) => $s->penjualan_kode)
                 ->addColumn('pembeli', fn($s) => $s->pembeli)
                 ->addColumn('penjualan_tanggal', fn($s) => date('d-m-Y H:i', strtotime($s->penjualan_tanggal)))
-                ->addColumn('total', function($s) {
+                ->addColumn('total', function ($s) {
                     return 'Rp ' . number_format(
-                        $s->details->sum(fn($detail) => $detail->harga * $detail->jumlah), 
-                        0, ',', '.'
+                        $s->details->sum(fn($detail) => $detail->harga * $detail->jumlah),
+                        0,
+                        ',',
+                        '.'
                     );
                 })
                 ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
-                ->addColumn('aksi', function($s) {
+                ->addColumn('aksi', function ($s) {
                     return '<div class="text-center">' .
                         '<button onclick="showDetail(\'' . route('penjualan.show', $s->penjualan_id) . '\')" class="btn btn-sm btn-info mr-1">Detail</button>' .
                         '<button onclick="modalAction(\'' . route('penjualan.edit_ajax', $s->penjualan_id) . '\')" class="btn btn-sm btn-warning mr-1">Edit</button>' .
@@ -52,7 +57,6 @@ class SalesController extends Controller
                 })
                 ->rawColumns(['aksi'])
                 ->toJson();
-
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -65,6 +69,77 @@ class SalesController extends Controller
         return response()->json($sale);
     }
 
-    // Method lainnya (create_ajax, store_ajax, dll) bisa ditambahkan di sini
-    // ... 
+    public function create_ajax()
+    {
+        $barang = BarangModel::select('barang_id', 'barang_nama', 'harga_jual')->get();
+        return view('penjualan.create_ajax', ['barang' => $barang]);
+    }
+
+    public function store_ajax(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pembeli' => 'required|string|max:100',
+            'items' => 'required|array|min:1',
+            'items.*.barang_id' => 'required|exists:m_barang,barang_id',
+            'items.*.jumlah' => 'required|integer|min:1'
+        ], [
+            'pembeli.required' => 'Nama pembeli wajib diisi',
+            'items.required' => 'Minimal 1 barang harus dipilih',
+            'items.*.jumlah.min' => 'Jumlah minimal 1'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Generate kode transaksi (contoh: PNJ00011)
+            $lastId = SalesModel::max('penjualan_id') ?? 0;
+            $penjualan_kode = 'PNJ' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
+
+            // Simpan header transaksi
+            $sale = SalesModel::create([
+                'user_id' => auth()->user()->user_id,
+                'pembeli' => $request->pembeli,
+                'penjualan_kode' => $penjualan_kode,
+                'penjualan_tanggal' => now()
+            ]);
+
+            // Simpan item transaksi
+            foreach ($request->items as $item) {
+                $barang = BarangModel::find($item['barang_id']);
+
+                DetailSalesModel::create([
+                    'penjualan_id' => $sale->penjualan_id,
+                    'barang_id' => $item['barang_id'],
+                    'harga' => $barang->harga_jual,
+                    'jumlah' => $item['jumlah']
+                ]);
+            }
+            // Update stok
+            $stok = StokModel::where('barang_id', $item['barang_id'])->first();
+            if ($stok) {
+                $stok->update([
+                    'stok_jumlah' => $stok->stok_jumlah - $item['jumlah'],
+                    'user_id' => auth()->user()->user_id // Update user yang mengubah stok
+                ]);
+            } else {
+                throw new \Exception("Stok barang {$barang->barang_nama} tidak ditemukan!");
+            }
+            return response()->json([
+                'status' => true,
+                'message' => 'Transaksi berhasil disimpan',
+                'sale_id' => $sale->penjualan_id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
