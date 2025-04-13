@@ -49,8 +49,8 @@ class StokController extends Controller
                 ->addColumn('barang_kode', fn($s) => $s->barang->barang_kode ?? '-')
                 ->addColumn('barang_nama', fn($s) => $s->barang->barang_nama ?? '-')
                 ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
-                ->addColumn('updated_at', content: function($s) {
-                    return $s->updated_at->format('d-m-Y H:i');
+                ->addColumn('updated_at', function($s) {
+                    return $s->updated_at ? $s->updated_at->toISOString() : null;
                 })
                 ->addColumn('aksi', function($s) {
                     return '<div class="text-center">'.

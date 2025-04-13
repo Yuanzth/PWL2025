@@ -19,6 +19,12 @@ class SalesModel extends Model
         'penjualan_kode',
         'penjualan_tanggal'
     ];
+    protected $casts = [
+        'penjualan_tanggal' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+    public $timestamps = true; // Aktifkan timestamps
 
     // Relasi ke user yang melakukan transaksi
     public function user(): BelongsTo

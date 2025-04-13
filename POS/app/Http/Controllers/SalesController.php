@@ -38,7 +38,9 @@ class SalesController extends Controller
                 ->addIndexColumn()
                 ->addColumn('penjualan_kode', fn($s) => $s->penjualan_kode)
                 ->addColumn('pembeli', fn($s) => $s->pembeli)
-                ->addColumn('penjualan_tanggal', fn($s) => date('d-m-Y H:i', strtotime($s->penjualan_tanggal)))
+                ->addColumn('penjualan_tanggal', function($s) {
+                    return $s->penjualan_tanggal->format('d-m-Y H:i'); // Format lokal
+                })
                 ->addColumn('total', function ($s) {
                     return 'Rp ' . number_format(
                         $s->details->sum(fn($detail) => $detail->harga * $detail->jumlah),
@@ -106,14 +108,14 @@ class SalesController extends Controller
         try {
             // Generate kode transaksi
             $lastId = SalesModel::max('penjualan_id') ?? 0;
-            $penjualan_kode = 'PNJ' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
+            $penjualan_kode = 'PNJ' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
 
             // Simpan header transaksi
             $sale = SalesModel::create([
                 'user_id' => auth()->user()->user_id,
                 'pembeli' => $request->pembeli,
                 'penjualan_kode' => $penjualan_kode,
-                'penjualan_tanggal' => now()
+                'penjualan_tanggal' => now()->setTimezone('Asia/Jakarta'), // Waktu lokal
             ]);
 
             // Simpan item dan update stok
