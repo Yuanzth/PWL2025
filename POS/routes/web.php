@@ -202,8 +202,10 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{id}/update_ajax', [SalesController::class, 'update_ajax'])->name('penjualan.update_ajax');
 
             // Delete
-            Route::get('/{id}/delete_ajax', [SalesController::class, 'confirm_ajax'])->name('penjualan.confirm_ajax');
-            Route::delete('/{id}/delete_ajax', [SalesController::class, 'delete_ajax'])->name('penjualan.delete_ajax');
+            Route::get('/penjualan/{id}/delete_ajax', [SalesController::class, 'confirm_ajax'])
+                ->name('penjualan.confirm_ajax');
+            Route::delete('/penjualan/{id}/delete_ajax', [SalesController::class, 'delete_ajax'])
+                ->name('penjualan.delete_ajax');
         });
     });
 });

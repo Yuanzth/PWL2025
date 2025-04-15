@@ -49,18 +49,17 @@ class StokController extends Controller
                 ->addColumn('barang_kode', fn($s) => $s->barang->barang_kode ?? '-')
                 ->addColumn('barang_nama', fn($s) => $s->barang->barang_nama ?? '-')
                 ->addColumn('nama', fn($s) => $s->user->nama ?? 'System')
-                ->addColumn('updated_at', function($s) {
+                ->addColumn('updated_at', function ($s) {
                     return $s->updated_at ? $s->updated_at->toISOString() : null;
                 })
-                ->addColumn('aksi', function($s) {
-                    return '<div class="text-center">'.
-                        '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/edit_ajax').'\')" class="btn btn-sm btn-warning mr-1">Edit</button>'.
-                        '<button onclick="modalAction(\''.url('/stok/'.$s->stok_id.'/delete_ajax').'\')" class="btn btn-sm btn-danger">Hapus</button>'.
+                ->addColumn('aksi', function ($s) {
+                    return '<div class="text-center">' .
+                        '<button onclick="modalAction(\'' . url('/stok/' . $s->stok_id . '/edit_ajax') . '\')" class="btn btn-sm btn-warning mr-1">Edit</button>' .
+                        '<button onclick="modalAction(\'' . url('/stok/' . $s->stok_id . '/delete_ajax') . '\')" class="btn btn-sm btn-danger">Hapus</button>' .
                         '</div>';
                 })
                 ->rawColumns(['aksi'])
                 ->toJson();
-
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -69,7 +68,7 @@ class StokController extends Controller
     public function create_ajax()
     {
         // Ambil barang yang belum ada di tabel stok
-        $barang = BarangModel::whereNotIn('barang_id', function($query) {
+        $barang = BarangModel::whereNotIn('barang_id', function ($query) {
             $query->select('barang_id')->from('t_stok');
         })->select('barang_id', 'barang_nama')->get();
 
@@ -112,7 +111,6 @@ class StokController extends Controller
                     'status' => true,
                     'message' => 'Stok berhasil ditambahkan'
                 ]);
-
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => false,
@@ -128,7 +126,6 @@ class StokController extends Controller
         try {
             $stok = StokModel::findOrFail($id);
             return view('stok.edit_ajax', ['stok' => $stok]);
-            
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return view('stok.edit_ajax')->with('error', 'Data stok tidak ditemukan');
         }
@@ -167,7 +164,6 @@ class StokController extends Controller
                     'status' => true,
                     'message' => 'Stok berhasil diperbarui'
                 ]);
-
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => false,
@@ -184,112 +180,32 @@ class StokController extends Controller
         try {
             $stok = StokModel::with('barang')->findOrFail($id);
             return view('stok.confirm_ajax', ['stok' => $stok]);
-            
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return view('stok.confirm_ajax')->with('error', 'Data stok tidak ditemukan');
         }
     }
 
     public function delete_ajax(Request $request, $id)
-        {
-            if ($request->ajax() || $request->wantsJson()) {
-                try {
-                    $stok = StokModel::findOrFail($id);
-                    $stok->delete();
-                    
-                    return response()->json([
-                        'status' => true,
-                        'message' => 'Data stok berhasil dihapus'
-                    ]);
-                    
-                } catch (\Exception $e) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => 'Gagal menghapus stok: ' . $e->getMessage()
-                    ], 500);
-                }
-            }
-            return redirect('/');
-        }
-        public function import()
-        {
-            return view('stok.import');
-        }
-
-        public function import_ajax(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $validator = Validator::make($request->all(), [
-                'file_stok' => ['required', 'mimes:xlsx', 'max:2048'] 
-            ], [
-                'file_stok.required' => 'File wajib diupload',
-                'file_stok.mimes' => 'Hanya file Excel (.xlsx) yang diperbolehkan'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validasi gagal',
-                    'msgField' => $validator->errors()
-                ], 422);
-            }
-
             try {
-                $file = $request->file('file_stok');
-                $reader = IOFactory::createReader('Xlsx');
-                $reader->setReadDataOnly(true);
-                $spreadsheet = $reader->load($file->getRealPath());
-                $sheet = $spreadsheet->getActiveSheet();
-                $rows = $sheet->toArray();
-
-                $insertData = [];
-                $currentUser = auth()->user()->user_id;
-                
-                foreach ($rows as $index => $row) {
-                    if ($index === 0) continue; // Skip header
-                    
-                    // Validasi format data
-                    if (!isset($row[0]) || !isset($row[1])) continue;
-                    
-                    $barangId = $row[0];
-                    $stokJumlah = $row[1];
-
-                    // Validasi numerik
-                    if (!is_numeric($barangId) || !is_numeric($stokJumlah) || $stokJumlah < 1) {
-                        continue;
-                    }
-
-                    $insertData[] = [
-                        'barang_id' => (int)$barangId,
-                        'stok_jumlah' => (int)$stokJumlah,
-                        'user_id' => $currentUser,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ];
-                }
-
-                if (!empty($insertData)) {
-                    StokModel::insert($insertData);
-                    return response()->json([
-                        'status' => true,
-                        'message' => 'Berhasil mengimport ' . count($insertData) . ' data stok'
-                    ]);
-                }
+                $stok = StokModel::findOrFail($id);
+                $stok->delete();
 
                 return response()->json([
-                    'status' => false,
-                    'message' => 'Template tidak valid atau data kosong'
+                    'status' => true,
+                    'message' => 'Data stok berhasil dihapus'
                 ]);
-
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Error: ' . $e->getMessage()
+                    'message' => 'Gagal menghapus stok: ' . $e->getMessage()
                 ], 500);
             }
         }
         return redirect('/');
     }
+    
     public function export_excel()
     {
         // Ambil data stok dengan relasi barang dan user
@@ -356,15 +272,15 @@ class StokController extends Controller
         $stok = StokModel::with(['barang', 'user'])
             ->orderBy('barang_id')
             ->get();
-    
+
         $pdf = Pdf::loadView('stok.export_pdf', [
             'stok' => $stok,
             'tanggal' => now()->format('d-m-Y H:i:s')
         ]);
-        
+
         $pdf->setPaper('a4', 'landscape');
         $pdf->setOption("isRemoteEnabled", true);
-        
-        return $pdf->stream('Data_Stok_'.date('YmdHis').'.pdf');
+
+        return $pdf->stream('Data_Stok_' . date('YmdHis') . '.pdf');
     }
 }

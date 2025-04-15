@@ -63,24 +63,24 @@
                     </div>
                 </div>
 
-                <!-- Daftar Item -->
-                <div class="card">
+                <!-- Keranjang Belanja -->
+                <div class="card mt-4">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0"><i class="fas fa-shopping-cart mr-2"></i>Keranjang Belanja</h6>
+                        <h6 class="mb-0"><i class="fas fa-shopping-basket mr-2"></i>Keranjang Belanja</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover mb-0">
+                            <table class="table table-hover mb-0">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th width="35%">Nama Barang</th>
-                                        <th width="15%">Harga Satuan</th>
-                                        <th width="15%">Qty</th>
-                                        <th width="20%">Subtotal</th>
-                                        <th width="15%">Aksi</th>
+                                        <th width="40%">Barang</th>
+                                        <th width="15%" class="text-left">Harga</th>
+                                        <th width="15%" class="text-center">Qty</th>
+                                        <th width="20%" class="text-left">Subtotal</th>
+                                        <th width="10%"></th>
                                     </tr>
                                 </thead>
-                                <tbody id="items-list" class="small"></tbody>
+                                <tbody id="items-list"></tbody>
                             </table>
                         </div>
                     </div>
@@ -89,15 +89,7 @@
                 <!-- Total -->
                 <div class="alert alert-info mt-4 p-3">
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Catatan:</span>
-                                </div>
-                                <input type="text" class="form-control" placeholder="Opsional">
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-right">
+                        <div class="col-md-6 text-left">
                             <h4 class="mb-0">Total: <span id="total" class="font-weight-bold">Rp 0</span></h4>
                         </div>
                     </div>
