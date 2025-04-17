@@ -4,7 +4,7 @@
         <div class="modal-header">
             <h5 class="modal-title">Kesalahan</h5>
             <button type="button" class="close" data-dismiss="modal">
-                <span>×</span>
+                <span>X</span>
             </button>
         </div>
         <div class="modal-body">
@@ -18,13 +18,15 @@
         <div class="modal-header bg-primary text-white">
             <h5 class="modal-title"></h5>
             <button type="button" class="close text-white" data-dismiss="modal">
-                <span>×</span>
+                <span>X</span>
             </button>
         </div>
         <div class="modal-body">
             <div class="receipt-container">
                 <div class="receipt-header text-center mb-4">
-                    <h3 class="mb-1">Toko Aditya Yuhanda</h3>
+                    <img src="{{ asset('adminlte/dist/img/AditsStoreLogo.png') }}" alt="Adit's Store Logo" class="store-logo mb-3">
+                    <h3 class="mb-1">ADIT'S STORE</h3>
+                    <p class="mb-0">ONE-STOP NEEDS SOLUTION</p>
                     <p class="mb-0">Jl. Teluk Ratai IV No. 15</p>
                     <p class="mb-0">Telp: (021) 210738742</p>
                 </div>
@@ -76,7 +78,7 @@
                     </table>
                 </div>
 
-                <div class="receipt-footer text-center mt-4">
+                <div class="receipt-footer text-center mt-4 d-print-block">
                     <p class="mb-1">Terima kasih telah berbelanja</p>
                     <p class="mb-0">Barang yang sudah dibeli tidak dapat dikembalikan</p>
                 </div>
@@ -117,39 +119,103 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    .store-logo {
+        max-width: 200px;
+        height: auto;
+        display: block;
+        margin: 0 auto 10px;
+    }
+
     @media print {
-        body * {
-            visibility: hidden;
+        /* Sembunyikan modal asli saat cetak */
+        .modal {
+            display: none !important;
         }
         
-        .modal-content,
-        .modal-content * {
-            visibility: visible;
-        }
-
-        .modal-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            margin: 0;
-            padding: 20px;
-            box-shadow: none;
-            border: none;
-        }
-
-        .modal-footer {
-            display: none;
-        }
-
+        /* Tampilkan konten struk saja */
         .receipt-container {
-            border: none;
-            padding: 0;
+            visibility: visible !important;
+            position: relative !important;
+            max-width: 100% !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            page-break-inside: avoid;
         }
+        .store-logo {
+            max-width: 250px;
+        }
+        
+        /* Reset ukuran kertas */
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        
     }
 </style>
 
 <script>
     function printReceipt() {
-        window.print();
+        // Clone konten modal
+        const originalContent = document.querySelector('.modal-content').cloneNode(true);
+        
+        // Hapus elemen yang tidak ingin dicetak
+        originalContent.querySelector('.modal-header').remove();
+        originalContent.querySelector('.modal-footer').remove();
+        
+        // Ambil semua stylesheet dari dokumen utama
+        const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+            .map(el => el.outerHTML)
+            .join('\n');
+
+        const printWindow = window.open('', '_blank');
+        
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Struk Penjualan</title>
+                    ${stylesheets}
+                    <style>
+                        /* Reset style untuk cetakan */
+                        body { 
+                            margin: 0 !important; 
+                            padding: 20px !important;
+                            -webkit-print-color-adjust: exact;
+                        }
+                        
+                        /* Sembunyikan elemen tidak perlu */
+                        .modal-header, .modal-footer {
+                            display: none !important;
+                        }
+                        
+                        /* Sesuaikan dengan tampilan modal */
+                        .receipt-container {
+                            max-width: 500px;
+                            margin: 0 auto;
+                            border: 2px solid #000;
+                            padding: 20px;
+                        }
+                        
+                        @media print {
+                            .receipt-container {
+                                border: none;
+                                padding: 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${originalContent.outerHTML}
+                </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
     }
 </script>

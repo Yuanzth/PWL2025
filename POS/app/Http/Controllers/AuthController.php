@@ -54,40 +54,45 @@ class AuthController extends Controller
 
     public function register()
     {
-        $levels = LevelModel::select('level_id', 'level_nama')->get();
-        
-        return view('auth.register')->with('levels', $levels);
+        $staffLevel = LevelModel::where('level_nama', 'Staff')->first();
+    
+        if (!$staffLevel) {
+            abort(404, 'Level Staff tidak ditemukan');
+        }
+    
+        return view('auth.register');
     }
-
+    
     public function postRegister(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'username' => 'required|string|unique:m_user,username',
             'nama' => 'required|string|max:255',
-            'password' => 'required|string|min:5|confirmed',
-            'level_id' => 'required|exists:m_level,level_id',
+            'password' => 'required|string|min:5|confirmed', // Hapus validasi level_id
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Failed.',
+                'message' => 'Validasi Gagal',
                 'errors' => $validator->errors(),
             ]);
         }
-
+    
+        // Cari level Staff
+        $staffLevel = LevelModel::where('level_nama', 'Staff')->firstOrFail();
+    
         UserModel::create([
             'username' => $request->username,
             'nama' => $request->nama,
             'password' => bcrypt($request->password),
-            'level_id' => $request->level_id
+            'level_id' => $staffLevel->level_id // Set otomatis ke level Staff
         ]);
-
+    
         return response()->json([
             'status' => true,
-            'message' => 'Registration Success.',
+            'message' => 'Registrasi Berhasil',
             'redirect' => url('/login')
         ]);
     }
-
 }

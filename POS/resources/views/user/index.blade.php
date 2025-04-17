@@ -71,7 +71,7 @@
 
     var tableUser;
     $(document).ready(function() {
-        tableUser = $('#table-user').DataTable({
+        let dataUser = $('#table-user').DataTable({
             processing: true,
             serverSide: true, 
             ajax: {

@@ -1,4 +1,4 @@
-<form action="{{ url('/user/ajax') }}" method="POST" id="form-tambah">
+<form action="{{ url('/user/store_ajax') }}" method="POST" id="form-tambah">
     @csrf
     <div id="modal-master" class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -45,12 +45,12 @@
 
 <script>
     $(document).ready(function() {
-        $("#form-tambah").validate(
+        $("#form-tambah").validate({ // <-- Tambahkan kurung kurawal pembuka disini
             rules: {
                 level_id: { required: true, number: true },
                 username: { required: true, minlength: 3, maxlength: 20 },
                 nama: { required: true, minlength: 3, maxlength: 100 },
-                password: { required: true, minlength: 6, maxlength: 20 }
+                password: { required: true, minlength: 5, maxlength: 20 }
             },
             submitHandler: function(form) {
                 $.ajax({
@@ -59,7 +59,7 @@
                     data: $(form).serialize(),
                     success: function(response) {
                         if (response.status) {
-                            $('#myModal').modal('hide');
+                            $('#modal-form').modal('hide'); // <-- Sesuaikan ID modal
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Berhasil',
@@ -68,7 +68,7 @@
                             dataUser.ajax.reload();
                         } else {
                             $('.error-text').text('');
-                            $.each(response.msgField, function(prefix, val) {
+                            $.each(response.msgField, function(prefix, val) { // <-- Sesuaikan dengan key response
                                 $('#error-' + prefix).text(val[0]);
                             });
                             Swal.fire({
@@ -77,6 +77,13 @@
                                 text: response.message
                             });
                         }
+                    },
+                    error: function(xhr) { // <-- Tambahkan error handling
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: xhr.responseJSON?.message || 'Terjadi kesalahan'
+                        });
                     }
                 });
                 return false;
@@ -89,8 +96,9 @@
             highlight: function(element, errorClass, validClass) {
                 $(element).addClass('is-invalid');
             },
-            unhighlight: function(element, errorClass, validClass)) {
+            unhighlight: function(element, errorClass, validClass) { // <-- Hapus tanda kurung berlebih
                 $(element).removeClass('is-invalid');
             }
-        });
+        }); // <-- Tambahkan kurung kurawal penutup disini
+    });
 </script>

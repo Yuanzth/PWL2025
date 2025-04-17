@@ -34,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}', [UserController::class, 'show']); // menampilkan detail user
             //Create Menggunakan AJAX
             Route::get('/create_ajax', [UserController::class, 'create_ajax']); // Menampilkan halaman form tambah user Ajax
-            Route::post('/ajax', [UserController::class, 'store_ajax']); // Menyimpan data user baru Ajax
+            Route::post('/store_ajax', [UserController::class, 'store_ajax']); // Menyimpan data user baru Ajax
             //Edit Menggunakan AJAX
             Route::get('/{id}/edit_ajax', [UserController::class, 'edit_ajax']); // Menampilkan halaman form edit user Ajax
             Route::put('/{id}/update_ajax', [UserController::class, 'update_ajax']); // Menyimpan perubahan data user Ajax
@@ -184,8 +184,8 @@ Route::middleware(['auth'])->group(function () {
     // Route untuk semua role (ADM, MNG, STF) - Hanya View
     Route::middleware(['authorize:ADM,MNG,STF'])->group(function () {
         Route::group(['prefix' => 'penjualan'], function () {
-            Route::get('/', [SalesController::class, 'index'])->name('penjualan.index'); // Beri nama
-            Route::post('/list', [SalesController::class, 'list'])->name('penjualan.list'); // <-- INI YANG DITAMBAH
+            Route::get('/', [SalesController::class, 'index'])->name('penjualan.index'); 
+            Route::post('/list', [SalesController::class, 'list'])->name('penjualan.list'); 
             Route::get('/{id}', [SalesController::class, 'show'])->name('penjualan.show');
         });
     });
