@@ -13,6 +13,11 @@
 
     <!-- Sidebar Menu -->
     <nav class="mt-2">
+        @php
+            $user = Auth::user();
+            $userRole = $user ? $user->getRole() : 'STF';
+        @endphp
+        
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <li class="nav-item">
                 <a href="{{ url('/') }}" class="nav-link {{ ($activeMenu == 'dashboard') ? 'active' : '' }}">
@@ -27,6 +32,8 @@
                 </a>
             </li>
 
+            @if($userRole == 'ADM')
+            <!-- Data Pengguna - Hanya Admin -->
             <li class="nav-header">Data Pengguna</li>
             <li class="nav-item">
                 <a href="{{ url('/level') }}" class="nav-link {{ ($activeMenu == 'level') ? 'active' : '' }}">
@@ -40,7 +47,10 @@
                     <p>Data User</p>
                 </a>
             </li>
+            @endif
 
+            @if(in_array($userRole, ['ADM', 'MNG']))
+            <!-- Data Barang - Admin & Manager -->
             <li class="nav-header">Data Barang</li>
             <li class="nav-item">
                 <a href="{{ url('/kategori') }}" class="nav-link {{ ($activeMenu == 'kategori') ? 'active' : '' }}">
@@ -54,7 +64,10 @@
                     <p>Data Barang</p>
                 </a>
             </li>
+            @endif
 
+            @if(in_array($userRole, ['ADM', 'MNG']))
+            <!-- Data Supplier - Admin & Manager -->
             <li class="nav-header">Data Supplier</li>
             <li class="nav-item">
                 <a href="{{ url('/supplier') }}" class="nav-link {{ ($activeMenu == 'supplier') ? 'active' : '' }}">
@@ -62,7 +75,10 @@
                     <p>Supplier Barang</p>
                 </a>
             </li>
+            @endif
 
+            @if(in_array($userRole, ['ADM', 'MNG', 'STF']))
+            <!-- Data Transaksi - Semua Role -->
             <li class="nav-header">Data Transaksi</li>
             <li class="nav-item">
                 <a href="{{ url('/stok') }}" class="nav-link {{ ($activeMenu == 'stok') ? 'active' : '' }}">
@@ -76,6 +92,7 @@
                     <p>Transaksi Penjualan</p>
                 </a>
             </li>
+            @endif
         </ul>
     </nav>
 </div>

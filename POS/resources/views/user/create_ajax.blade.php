@@ -96,9 +96,9 @@
             highlight: function(element, errorClass, validClass) {
                 $(element).addClass('is-invalid');
             },
-            unhighlight: function(element, errorClass, validClass) { // <-- Hapus tanda kurung berlebih
+            unhighlight: function(element, errorClass, validClass) { 
                 $(element).removeClass('is-invalid');
             }
-        }); // <-- Tambahkan kurung kurawal penutup disini
+        }); 
     });
 </script>
